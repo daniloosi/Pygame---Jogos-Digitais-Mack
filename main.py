@@ -173,6 +173,11 @@ def main_game():
 
     enemies = create_enemies()
 
+    # Inicialize a pontuação e o nível ao começar o jogo
+    score = 0
+    level = 1
+    background_y = 0
+
     running = True
     while running:
         background_y += background_speed
@@ -210,9 +215,10 @@ def main_game():
                     level += 1
                     enemy_speed += 1
 
+        # Verifica colisão com os inimigos
         for enemy in enemies:
             if player_rect.colliderect(enemy["rect"]):
-                running = False
+                running = False  # O jogador morre, reiniciando o jogo
 
         screen.blit(player_image, player_rect)
         for enemy in enemies:
