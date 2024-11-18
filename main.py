@@ -35,26 +35,25 @@ clock = pygame.time.Clock()
 difficulty = "Normal"
 difficulty_settings = {
     "Fácil": {
-        "enemy_speed": 4,
-        "level_up_score": 4
+        "enemy_speed": 6,
+        "level_up_score": 6
     },
     "Normal": {
-        "enemy_speed": 6,
-        "level_up_score": 8
+        "enemy_speed": 9,
+        "level_up_score": 11
     },
     "Difícil": {
-        "enemy_speed": 8,
-        "level_up_score": 12
+        "enemy_speed": 13,
+        "level_up_score": 16
     },
 }
-level_up_score = difficulty_settings[difficulty]["level_up_score"]
 
 # Fonte de texto
-font = pygame.font.SysFont(None, 36)
+font = pygame.font.SysFont("verdana", 36)
 
 # Configurações da tela
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Overdrive")
+pygame.display.set_caption("Corredor X: A Corrida Pela Supremacia")
 
 # Carrega as imagens
 background_image = pygame.image.load("pista.jpg")
@@ -73,22 +72,41 @@ enemy_images = [
 
 
 def show_menu():
-    global difficulty, enemy_speed, level_up_score
+    global difficulty, enemy_speed, level_up_score, score, level
 
-    screen.fill(WHITE)
-    title_text = font.render("Overdrive", True, BLACK)
-    prompt_text = font.render("Pressione Enter para continuar", True, BLUE)
-    objective_text = font.render(
-        "Objetivo: Ultrapasse o maior número de carros sem causar acidentes",
-        True, RED)
+    # Resetar o estado do jogo ao voltar ao menu principal
+    score = 0
+    level = 1
+    enemy_speed = difficulty_settings[difficulty]["enemy_speed"]
+    level_up_score = difficulty_settings[difficulty]["level_up_score"]
 
+    screen.fill(BLACK)
+    title_text = font.render("Corredor X: A Corrida Pela Supremacia", True,
+                             WHITE)
+    prompt_text = font.render("Pressione Enter para continuar", True, WHITE)
+
+    lore_lines = [
+        "Em Corredor X: A Corrida Pela Supremacia, você assume o papel de Corredor X,",
+        "um atleta lendário com um único objetivo: conquistar o título de 'Melhor Corredor do Mundo'.",
+        "Em uma pista infinita e repleta de desafios, você enfrentará uma corrida emocionante",
+        "contra os mais habilidosos corredores do planeta.",
+        "Prepare-se para correr, lutar e conquistar o pódio em Corredor X:",
+        "A Corrida Pela Supremacia — onde apenas o mais rápido sobreviverá!"
+    ]
+
+    # Exibir título
     screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2,
-                             SCREEN_HEIGHT // 2 - 150))
-    screen.blit(objective_text,
-                (SCREEN_WIDTH // 2 - objective_text.get_width() // 2,
-                 SCREEN_HEIGHT // 2 - 50))
+                             SCREEN_HEIGHT // 2 - 200))
+
+    # Exibir lore quebrado em múltiplas linhas
+    for i, line in enumerate(lore_lines):
+        line_text = font.render(line, True, RED)
+        screen.blit(line_text, (SCREEN_WIDTH // 2 - line_text.get_width() // 2,
+                                SCREEN_HEIGHT // 2 - 100 + i * 30))
+
+    # Exibir prompt
     screen.blit(prompt_text, (SCREEN_WIDTH // 2 - prompt_text.get_width() // 2,
-                              SCREEN_HEIGHT // 2 + 50))
+                              SCREEN_HEIGHT // 2 + 100))
     pygame.display.flip()
 
     waiting = True
@@ -97,21 +115,25 @@ def show_menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                waiting = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    waiting = False
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
 
     difficulties = ["Fácil", "Normal", "Difícil"]
     selected_option = difficulties.index(difficulty)
 
     while True:
-        screen.fill(WHITE)
-        difficulty_title = font.render("Selecione a Dificuldade", True, BLACK)
+        screen.fill(BLACK)
+        difficulty_title = font.render("Selecione a Dificuldade", True, WHITE)
         screen.blit(difficulty_title,
                     (SCREEN_WIDTH // 2 - difficulty_title.get_width() // 2,
                      SCREEN_HEIGHT // 2 - 150))
 
         for i, diff in enumerate(difficulties):
-            color = RED if i == selected_option else BLACK
+            color = WHITE if i == selected_option else RED
             difficulty_text = font.render(diff, True, color)
             screen.blit(
                 difficulty_text,
@@ -137,11 +159,69 @@ def show_menu():
                     level_up_score = difficulty_settings[difficulty][
                         "level_up_score"]
                     return
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+
+def pause_menu():
+    global score, level, enemy_speed
+
+    paused = True
+    selected_option = 0
+    options = ["Retomar", "Menu"]
+
+    while paused:
+        screen.fill(BLACK)
+
+        # Título do menu de pausa
+        pause_title = font.render("Jogo Pausado", True, WHITE)
+        screen.blit(
+            pause_title,
+            (SCREEN_WIDTH // 2 - pause_title.get_width() // 2,
+             SCREEN_HEIGHT // 2 - 150),
+        )
+
+        # Exibe as opções do menu
+        for i, option in enumerate(options):
+            color = WHITE if i == selected_option else RED
+            option_text = font.render(option, True, color)
+            screen.blit(
+                option_text,
+                (SCREEN_WIDTH // 2 - option_text.get_width() // 2,
+                 SCREEN_HEIGHT // 2 + i * 50),
+            )
+
+        pygame.display.flip()
+
+        # Lida com eventos no menu de pausa
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_option = (selected_option - 1) % len(options)
+                elif event.key == pygame.K_DOWN:
+                    selected_option = (selected_option + 1) % len(options)
+                elif event.key == pygame.K_RETURN:
+                    if options[selected_option] == "Retomar":
+                        paused = False
+                    elif options[selected_option] == "Menu":
+                        score = 0
+                        level = 1
+                        enemy_speed = difficulty_settings[difficulty][
+                            "enemy_speed"]
+                        paused = False
+                        show_menu()
+                        return
+                elif event.key == pygame.K_ESCAPE:
+                    paused = False
 
 
 def show_score():
-    score_text = font.render(f"Pontuação: {score}", True, BLACK)
-    difficulty_text = font.render(f"Dificuldade: {difficulty}", True, BLUE)
+    score_text = font.render(f"Pontuação: {score}", True, WHITE)
+    difficulty_text = font.render(f"Dificuldade: {difficulty}", True, WHITE)
     screen.blit(score_text, (10, 10))
     screen.blit(difficulty_text, (10, 50))
 
@@ -169,14 +249,9 @@ def create_enemies():
 
 
 def main_game():
-    global enemy_speed, level, score, background_y
+    global enemy_speed, level, score, background_y, level_up_score
 
     enemies = create_enemies()
-
-    # Inicialize a pontuação e o nível ao começar o jogo
-    score = 0
-    level = 1
-    background_y = 0
 
     running = True
     while running:
@@ -191,6 +266,9 @@ def main_game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pause_menu()
 
         keys = pygame.key.get_pressed()
 
@@ -215,10 +293,9 @@ def main_game():
                     level += 1
                     enemy_speed += 1
 
-        # Verifica colisão com os inimigos
         for enemy in enemies:
             if player_rect.colliderect(enemy["rect"]):
-                running = False  # O jogador morre, reiniciando o jogo
+                running = False
 
         screen.blit(player_image, player_rect)
         for enemy in enemies:
